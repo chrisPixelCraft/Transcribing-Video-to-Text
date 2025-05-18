@@ -8,3 +8,7 @@ output
 videos
 generated_files.zip
 static/audio
+static/
+temp/
+*.m4a
+*.mp4
