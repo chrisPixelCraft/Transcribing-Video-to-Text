@@ -53,16 +53,32 @@ def convert_m4a_to_mp4(m4a_file, output_mp4=None):
 def transcribe_with_whisper(audio_file, language=None, output_filename=None):
     """Directly transcribe using Whisper model with language option."""
     try:
-        # Load the Whisper model
-        model = whisper.load_model("base")
+        # Load the Whisper large-v3 model for best quality
+        # This model is ~2.9GB and provides superior accuracy for:
+        # - Technical/physics terminology
+        # - Chinese-English code-switching
+        # - Mixed language content
+        print("Loading Whisper large-v3 model (this may take a moment on first run)...")
+        model = whisper.load_model("large-v3")
 
         # Set transcription options
+        # For Chinese+English mixed content, setting language to 'zh' helps
+        # the model better handle code-switching in academic lectures
         options = {}
         if language:
             options["language"] = language
 
-        # Perform transcription
-        result = model.transcribe(audio_file, **options)
+        # Show file info before transcription
+        print(f"\n{'='*50}")
+        print(f"📝 Transcribing: {os.path.basename(audio_file)}")
+        if os.path.exists(audio_file):
+            file_size_mb = os.path.getsize(audio_file) / (1024 * 1024)
+            print(f"   File size: {file_size_mb:.2f} MB")
+        print(f"   Language: {language if language else 'auto-detect'}")
+        print(f"{'='*50}\n")
+
+        # Perform transcription with verbose progress
+        result = model.transcribe(audio_file, verbose=True, **options)
 
         # Save the transcription to output directory
         output_directory = "./output"
@@ -135,14 +151,21 @@ def main():
         output_filename = sys.argv[3]
         print(f"Using custom output filename: {output_filename}")
 
+    # Show which file is being processed
+    print(f"\n{'='*60}")
+    print(f"🎵 Processing M4A file: {m4a_file}")
+    print(f"{'='*60}\n")
+
     # Convert M4A to MP4
     mp4_file = convert_m4a_to_mp4(m4a_file)
     if not mp4_file:
         print("Conversion failed. Exiting.")
         return
 
+    print(f"✓ Converted to MP4: {mp4_file}\n")
+
     # Start transcription process
-    print("Starting transcription with Whisper...")
+    print("Starting audio extraction and noise reduction with Whisper...")
     cleaned_audio_path = './audio/cleaned/cleaned_audio.mp3'
 
     # First use the script to extract and preprocess audio
@@ -151,13 +174,29 @@ def main():
         extract_cmd = ["./generate_transcripts.sh", mp4_file]
         subprocess.run(extract_cmd, check=True, text=True, capture_output=True)
         print("Audio extraction and preprocessing complete.")
+        print(f"✓ Extracted and cleaned audio: {cleaned_audio_path}")
+        print(f"  (Source: {os.path.basename(m4a_file)})\n")
+
+        # Show output filename
+        if output_filename:
+            final_output_name = output_filename if output_filename.endswith('.txt') else f"{output_filename}.txt"
+            print(f"📄 Output transcript will be: output/{final_output_name}\n")
 
         # Now use our custom transcription with language support
         if os.path.exists(cleaned_audio_path):
             transcript, output_file = transcribe_with_whisper(cleaned_audio_path, language, output_filename)
             if transcript:
-                print(f"Transcription complete! Saved to {output_file}")
-                print("\nTranscript preview:")
+                # Show completion message with file mapping
+                lang_name = supported_languages.get(language, 'Auto-detected') if language else 'Auto-detected'
+                print(f"\n{'='*60}")
+                print(f"✅ TRANSCRIPTION COMPLETE")
+                print(f"{'='*60}")
+                print(f"Source M4A:  {m4a_file}")
+                print(f"Output file: {output_file}")
+                print(f"Language:    {lang_name}")
+                print(f"{'='*60}\n")
+
+                print("Transcript preview:")
                 print("-" * 40)
                 preview = transcript[:200] + "..." if len(transcript) > 200 else transcript
                 print(preview)

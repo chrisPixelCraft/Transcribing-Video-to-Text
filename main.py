@@ -32,7 +32,9 @@ def create_transcript(transcript_method, language=None):
         return transcript, output_file
 
     try:
-        model = whisper.load_model("base")
+        # Load Whisper large-v3 model for best quality with Chinese-English mixed content
+        print("Loading Whisper large-v3 model...")
+        model = whisper.load_model("large-v3")
         # Set language if provided
         options = {}
         if language:

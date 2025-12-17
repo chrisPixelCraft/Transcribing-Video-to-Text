@@ -55,7 +55,9 @@ def generate_files(video_path):
     noise_removal()
 
     try:
-        model = whisper.load_model("base")
+        # Load Whisper large-v3 model for best quality with Chinese-English mixed content
+        print("Loading Whisper large-v3 model...")
+        model = whisper.load_model("large-v3")
         result = model.transcribe("./audio/cleaned/cleaned_audio.mp3")["text"]
     except Exception as e:
         result = f"Error: Could not transcribe as {e}"
