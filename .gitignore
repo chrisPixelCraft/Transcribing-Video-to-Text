@@ -1,14 +1,54 @@
-env
-__pycache__
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Virtual environments and local config
+.env
+.env.*
+!.env.example
+env/
+venv/
+.venv/
+
+# Project runtime output
+audio/
+Audio/
+graphs/
+videos/
+temp/
+output/
+static/audio/
+generated_files.zip
+user_messages
+*.log
+
+# Model/checkpoint artifacts
 model.pth
 model.pth.tar.gz
-audio
-graphs
-output
-videos
-generated_files.zip
-static/audio
-static/
-temp/
+*.pt
+*.pth
+*.ckpt
+*.onnx
+*.safetensors
+
+# Downloaded media
 *.m4a
+*.mp3
+*.wav
+*.aac
+*.flac
+*.ogg
+*.opus
 *.mp4
+*.webm
+*.mkv
+*.mov
+*.avi
+*.m4v
+
+# OS/editor
+.DS_Store
+Thumbs.db
+*.swp
+*.swo

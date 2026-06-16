@@ -172,9 +172,28 @@ def main():
     try:
         # Run only audio extraction and preprocessing steps
         extract_cmd = ["./generate_transcripts.sh", mp4_file]
-        subprocess.run(extract_cmd, check=True, text=True, capture_output=True)
-        print("Audio extraction and preprocessing complete.")
-        print(f"✓ Extracted and cleaned audio: {cleaned_audio_path}")
+        process = subprocess.run(extract_cmd, check=True, text=True, capture_output=True)
+
+        original_audio_path = './audio/original/audio_extracted.mp3'
+        transcription_input = None
+        if os.path.exists(cleaned_audio_path):
+            transcription_input = cleaned_audio_path
+            print("Audio extraction and preprocessing complete.")
+            print(f"✓ Extracted and cleaned audio: {cleaned_audio_path}")
+        elif os.path.exists(original_audio_path):
+            transcription_input = original_audio_path
+            print("Warning: cleaned audio was not generated. Falling back to extracted audio.")
+            print(f"✓ Extracted audio: {original_audio_path}")
+            if process.stderr.strip():
+                print("\nAudio processing errors:")
+                print(process.stderr.strip())
+        else:
+            print("Error: neither cleaned nor extracted audio was generated.")
+            if process.stderr.strip():
+                print("\nAudio processing errors:")
+                print(process.stderr.strip())
+            return
+
         print(f"  (Source: {os.path.basename(wav_file)})\n")
 
         # Show output filename
@@ -183,8 +202,8 @@ def main():
             print(f"📄 Output transcript will be: output/{final_output_name}\n")
 
         # Now use our custom transcription with language support
-        if os.path.exists(cleaned_audio_path):
-            transcript, output_file = transcribe_with_whisper(cleaned_audio_path, language, output_filename)
+        if transcription_input:
+            transcript, output_file = transcribe_with_whisper(transcription_input, language, output_filename)
             if transcript:
                 # Show completion message with file mapping
                 lang_name = supported_languages.get(language, 'Auto-detected') if language else 'Auto-detected'
@@ -202,7 +221,7 @@ def main():
                 print(preview)
                 print("-" * 40)
         else:
-            print(f"Error: Cleaned audio file not found at {cleaned_audio_path}")
+            print(f"Error: audio file not found at {cleaned_audio_path}")
     except subprocess.CalledProcessError as e:
         print(f"Error during audio processing: {e}")
         if hasattr(e, 'stderr'):

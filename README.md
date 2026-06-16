@@ -20,6 +20,7 @@ A comprehensive video-to-text transcription system that extracts audio from vide
 - [Quick Start](#quick-start)
 - [Installation](#installation)
 - [Usage](#usage)
+  - [CLI - YouTube Link Transcription](#cli---youtube-link-transcription)
   - [CLI - Video Transcription](#cli---video-transcription)
   - [CLI - Audio Transcription](#cli---audio-transcription)
   - [Batch Processing](#batch-processing)
@@ -117,6 +118,79 @@ mkdir Audio   # For batch M4A processing (optional)
 
 ## Usage
 
+### CLI - YouTube Link Transcription
+
+This repository does not transcribe YouTube URLs directly. Use `yt-dlp` to download the YouTube video or audio first, then run the existing transcription pipeline.
+
+YouTube changes often break older `yt-dlp` installs. Use Python 3.10+ for `yt-dlp` if possible; the transcription environment can still be separate.
+
+**Install or update `yt-dlp`:**
+```bash
+python -m pip install -U --pre "yt-dlp[default,curl-cffi]"
+yt-dlp --version
+```
+
+**Option 1: Download as MP4 and transcribe with the video pipeline**
+```bash
+mkdir -p videos
+
+# Download the YouTube video into ./videos
+yt-dlp --force-ipv4 --impersonate chrome \
+  -f "bv*+ba/best" --merge-output-format mp4 \
+  -o "videos/youtube_video.%(ext)s" \
+  "https://www.youtube.com/watch?v=pWmXczxLlxY"
+
+# Transcribe the downloaded MP4 with Whisper
+./generate_transcripts.sh "videos/youtube_video.mp4" whisper
+```
+
+**Option 2: Download audio only and transcribe with the M4A pipeline**
+```bash
+mkdir -p Audio
+
+# Download only the audio into ./Audio
+yt-dlp --force-ipv4 --impersonate chrome \
+  -f "bestaudio[ext=m4a]/bestaudio/best" \
+  -x --audio-format m4a \
+  -o "Audio/youtube_audio.%(ext)s" \
+  "https://www.youtube.com/watch?v=pWmXczxLlxY"
+
+# Transcribe the downloaded audio file
+python direct_m4a_to_text.py "Audio/youtube_audio.m4a" zh youtube_transcript
+```
+
+Use `zh`, `en`, `ja`, or another supported language code as the second argument. If the video has mixed Chinese and English speech, `zh` is usually a good hint for Whisper.
+
+**If YouTube download fails with `nsig extraction failed` or `Only images are available`:**
+```bash
+# Install a JavaScript runtime and let yt-dlp fetch the current EJS challenge solver.
+# Deno is the recommended runtime in yt-dlp's EJS guide.
+curl -fsSL https://deno.land/install.sh | sh
+export PATH="$HOME/.deno/bin:$PATH"
+
+python -m pip install -U --pre "yt-dlp[default,curl-cffi]"
+
+yt-dlp --force-ipv4 --impersonate chrome \
+  --remote-components ejs:github \
+  -f "bestaudio[ext=m4a]/bestaudio/best" \
+  -x --audio-format m4a \
+  -o "Audio/youtube_audio.%(ext)s" \
+  "https://www.youtube.com/watch?v=pWmXczxLlxY"
+```
+
+If you are running `yt-dlp` inside an old Python 3.8 conda environment and still see warnings, create a newer environment just for downloading:
+```bash
+conda create -n ytdlp python=3.11 -y
+conda activate ytdlp
+python -m pip install -U --pre "yt-dlp[default,curl-cffi]"
+```
+
+Then reactivate the transcription environment before running `direct_m4a_to_text.py`.
+
+**Output file:**
+- Video pipeline: `./output/whisper_transcript.txt`
+- M4A pipeline example above: `./output/youtube_transcript.txt`
+
 ### CLI - Video Transcription
 
 **Extract audio only (no transcription):**
@@ -154,6 +228,22 @@ mkdir Audio   # For batch M4A processing (optional)
 - Visualizations: `./graphs/original/` and `./graphs/cleaned/`
 
 ### CLI - Audio Transcription
+
+#### Concrete Examples:
+```bash
+yt-dlp --force-ipv4 --impersonate chrome "https://www.youtube.com/watch?v=xiompYe8tbM"
+python direct_m4a_to_text.py "影片檔名.webm" zh 
+```
+
+**Direct M4A transcription without video conversion:**
+```bash
+python direct_m4a_to_text.py recording.m4a [language_code] [output_filename]
+
+# Examples:
+python direct_m4a_to_text.py Audio/youtube_audio.m4a zh youtube_transcript
+python direct_m4a_to_text.py recording.m4a en meeting_notes
+python direct_m4a_to_text.py recording.m4a ja interview
+```
 
 **Process M4A files:**
 ```bash
