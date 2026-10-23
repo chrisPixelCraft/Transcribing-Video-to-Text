@@ -52,3 +52,14 @@ model.pth.tar.gz
 Thumbs.db
 *.swp
 *.swo
+
+# Personal transcription data (松明 course)
+松明/
+松明.zip
+松明_md/
+松明_latex/
+松明_pdf/
+# transcripts live in output/松明/ (already ignored by output/)
+
+# Failed downloads (e.g. Drive 401 JSON saved as .zip)
+FILENAME.zip
