@@ -60,6 +60,12 @@ Thumbs.db
 松明_latex/
 松明_pdf/
 # transcripts live in output/松明/ (already ignored by output/)
+松明_md_tw/
+松明_latex_tw/
+松明_pdf_tw/
 
 # Failed downloads (e.g. Drive 401 JSON saved as .zip)
 FILENAME.zip
+
+# CodeGraph index (local only)
+.codegraph/
